@@ -86,7 +86,7 @@ func intepretLine(line string) (gameID int, games []Game, err error) {
 	return
 }
 
-func ExecA() error {
+func Exec() error {
 	file, err := os.Open("days/day2/day2A.txt")
 	if err != nil {
 		return errors.Join(errors.New("bad file read"), err)
