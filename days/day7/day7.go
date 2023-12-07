@@ -127,6 +127,8 @@ func CreateHand(cards []string, bid int) (Hand, error) {
 }
 
 func CreateJokerHand(cards []string, bid int) (Hand, error) {
+	const Joker = "J"
+
 	if len(cards) != 5 {
 		return Hand{}, errors.New("bad input value")
 	}
@@ -136,7 +138,7 @@ func CreateJokerHand(cards []string, bid int) (Hand, error) {
 
 	jokerCount := 0
 	for _, card := range cards {
-		if card == "J" {
+		if card == Joker {
 			jokerCount++
 			continue
 		}
@@ -156,10 +158,20 @@ func CreateJokerHand(cards []string, bid int) (Hand, error) {
 	}
 
 	highestCount := 0
-	for _, count := range cardMap {
+	highCountCard := ""
+	for card, count := range cardMap {
 		if count > highestCount {
 			highestCount = count
+			highCountCard = card
 		}
+	}
+
+	if highCountCard != "" {
+		cardMap[highCountCard] = cardMap[highCountCard] + jokerCount
+		highestCount += jokerCount
+	} else {
+		highestCount = 5
+		highCountCard = Joker
 	}
 
 	switch highestCount {
@@ -167,27 +179,14 @@ func CreateJokerHand(cards []string, bid int) (Hand, error) {
 		hand.comboRank = fiveOfAKind
 	case 4:
 		hand.comboRank = fourOfAKind
-		if jokerCount == 1 {
-			hand.comboRank = fiveOfAKind
-		}
 	case 3:
 		hand.comboRank = threeOfAKind
-		switch jokerCount {
-		case 2:
-			hand.comboRank = fiveOfAKind
-		case 1:
-			hand.comboRank = fourOfAKind
-		case 0:
-			for _, count := range cardMap {
-				if count == 2 {
-					hand.comboRank = fullHouse
-					break
-				}
+		for _, count := range cardMap {
+			if count == 2 {
+				hand.comboRank = fullHouse
+				break
 			}
-		default:
-			return hand, errors.New("bad logic")
 		}
-
 	case 2:
 		// check if there is second pair
 		pairCount := 0
@@ -199,39 +198,13 @@ func CreateJokerHand(cards []string, bid int) (Hand, error) {
 		switch pairCount {
 		case 2:
 			hand.comboRank = twoPairs
-			if jokerCount == 1 {
-				hand.comboRank = fullHouse
-			}
 		case 1:
-			switch jokerCount {
-			case 3:
-				hand.comboRank = fiveOfAKind
-			case 2:
-				hand.comboRank = fourOfAKind
-			case 1:
-				hand.comboRank = threeOfAKind
-			default:
-				hand.comboRank = onePair
-			}
+			hand.comboRank = onePair
 		default:
-			return hand, errors.New("bad logic")
+			return hand, errors.New("bad input values")
 		}
 	case 1:
 		hand.comboRank = highCard
-		switch jokerCount {
-		case 4:
-			hand.comboRank = fiveOfAKind
-		case 3:
-			hand.comboRank = fourOfAKind
-		case 2:
-			hand.comboRank = threeOfAKind
-		case 1:
-			hand.comboRank = onePair
-		}
-	case 0:
-		if jokerCount == 5 {
-			hand.comboRank = fiveOfAKind
-		}
 	default:
 		return hand, errors.New("bad input value")
 	}
