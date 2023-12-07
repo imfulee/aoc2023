@@ -211,18 +211,20 @@ func Exec() error {
 		return errors.New("bad amount of seeds")
 	}
 
+	var mu sync.Mutex
 	var wg sync.WaitGroup
-	lowChan := make(chan int, len(seeds)/2)
+	lowestLocNum = math.MaxInt64
 
 	for sp := 0; sp < len(seeds); sp += 2 {
 		start := seeds[sp]
 		length := seeds[sp+1]
 
 		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-		go func(c chan int, s int, l int) {
 			lowest := math.MaxInt64
-			for seed, end := s, s+l; seed < end; seed++ {
+			for seed, end := start, start+length; seed < end; seed++ {
 				location := transform(seed)
 
 				if location < lowest {
@@ -230,23 +232,15 @@ func Exec() error {
 				}
 			}
 
-			c <- lowest
-			wg.Done()
-		}(lowChan, start, length)
+			mu.Lock()
+			if lowest < lowestLocNum {
+				lowestLocNum = lowest
+			}
+			mu.Unlock()
+		}()
 	}
 
-	go func() {
-		wg.Wait()
-		close(lowChan)
-	}()
-
-	lowestLocNum = math.MaxInt64
-	for lowest := range lowChan {
-		if lowest < lowestLocNum {
-			lowestLocNum = lowest
-		}
-	}
-
+	wg.Wait()
 	fmt.Println(lowestLocNum)
 
 	return nil
