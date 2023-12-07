@@ -1,12 +1,12 @@
 package main
 
 import (
-	"aoc2023/days/day6"
+	"aoc2023/days/day7"
 	"fmt"
 )
 
 func main() {
-	if err := day6.Exec(); err != nil {
+	if err := day7.Exec(); err != nil {
 		fmt.Println(err)
 	}
 }
