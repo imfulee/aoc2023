@@ -7,6 +7,7 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+	"sync"
 )
 
 type Range struct {
@@ -210,17 +211,39 @@ func Exec() error {
 		return errors.New("bad amount of seeds")
 	}
 
-	lowestLocNum = math.MaxInt64
+	var wg sync.WaitGroup
+	lowChan := make(chan int, len(seeds)/2)
+
 	for sp := 0; sp < len(seeds); sp += 2 {
 		start := seeds[sp]
 		length := seeds[sp+1]
 
-		for seed := start; seed < start+length; seed++ {
-			location := transform(seed)
+		wg.Add(1)
 
-			if location < lowestLocNum {
-				lowestLocNum = location
+		go func(c chan int, s int, l int) {
+			lowest := math.MaxInt64
+			for seed, end := s, s+l; seed < end; seed++ {
+				location := transform(seed)
+
+				if location < lowest {
+					lowest = location
+				}
 			}
+
+			c <- lowest
+			wg.Done()
+		}(lowChan, start, length)
+	}
+
+	go func() {
+		wg.Wait()
+		close(lowChan)
+	}()
+
+	lowestLocNum = math.MaxInt64
+	for lowest := range lowChan {
+		if lowest < lowestLocNum {
+			lowestLocNum = lowest
 		}
 	}
 
