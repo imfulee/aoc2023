@@ -6,7 +6,7 @@ var numberRegexInst *regexp.Regexp
 
 func NumberRegex() (*regexp.Regexp, error) {
 	if numberRegexInst == nil {
-		numberRegex, err := regexp.Compile("[0-9]+")
+		numberRegex, err := regexp.Compile("-?[0-9]+")
 		if err != nil {
 			return nil, err
 		}
