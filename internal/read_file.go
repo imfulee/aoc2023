@@ -41,8 +41,12 @@ func (r *Reader) New(path string) error {
 	return nil
 }
 
-func (r *Reader) Lines(lines chan string) {
+func (r *Reader) Lines(lines chan string) error {
 	defer close(lines)
+
+	if r.file == nil {
+		return errors.New("didn't initialise file")
+	}
 
 	fileScanner := bufio.NewScanner(r.file)
 	fileScanner.Split(bufio.ScanLines)
@@ -50,4 +54,6 @@ func (r *Reader) Lines(lines chan string) {
 	for fileScanner.Scan() {
 		lines <- fileScanner.Text()
 	}
+
+	return nil
 }
